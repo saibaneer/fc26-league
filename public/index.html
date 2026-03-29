@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FC26 League</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f1923;
+      color: #e8e8e8;
+      min-height: 100vh;
+    }
+    header {
+      background: linear-gradient(135deg, #1a2a3a, #0d4b3c);
+      padding: 1.5rem 2rem;
+      text-align: center;
+    }
+    header h1 { font-size: 1.8rem; color: #00cc88; }
+    header p { color: #8899aa; font-size: 0.9rem; margin-top: 0.25rem; }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      background: #1a2a3a;
+      border-bottom: 2px solid #00cc88;
+    }
+    .tab {
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      color: #8899aa;
+      border: none;
+      background: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .tab:hover { color: #e8e8e8; }
+    .tab.active { color: #00cc88; background: #0f1923; }
+
+    .container { max-width: 800px; margin: 0 auto; padding: 1.5rem; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .card {
+      background: #1a2a3a;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .card h3 { color: #00cc88; margin-bottom: 0.75rem; }
+
+    input, select {
+      background: #0f1923;
+      border: 1px solid #2a3a4a;
+      color: #e8e8e8;
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      width: 100%;
+    }
+    input:focus, select:focus { border-color: #00cc88; outline: none; }
+
+    button {
+      background: #00cc88;
+      color: #0f1923;
+      border: none;
+      padding: 0.5rem 1.25rem;
+      border-radius: 4px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    button:hover { background: #00e699; }
+    button.danger { background: #cc3344; color: #fff; }
+    button.danger:hover { background: #ee4455; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .form-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      align-items: center;
+    }
+    .form-row input { flex: 1; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th {
+      text-align: left;
+      padding: 0.5rem;
+      color: #00cc88;
+      border-bottom: 1px solid #2a3a4a;
+      font-weight: 600;
+    }
+    td {
+      padding: 0.5rem;
+      border-bottom: 1px solid #1a2a3a;
+    }
+    tr:hover td { background: #1a2a3a; }
+    .pos-1 td { color: #ffd700; font-weight: 600; }
+
+    .fixture-card {
+      background: #1a2a3a;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .fixture-card.played { border-left: 3px solid #00cc88; }
+    .fixture-card.unplayed { border-left: 3px solid #445566; }
+    .fixture-players {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      flex: 1;
+      min-width: 200px;
+    }
+    .fixture-score { color: #00cc88; font-size: 1.1rem; font-weight: 700; }
+    .fixture-teams { color: #8899aa; font-size: 0.8rem; }
+    .vs { color: #445566; }
+
+    .round-header {
+      color: #8899aa;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin: 1rem 0 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .player-tag {
+      display: inline-block;
+      background: #0f1923;
+      color: #00cc88;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      margin: 0.15rem;
+    }
+
+    .checkbox-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.5rem 0; }
+    .checkbox-list label {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #0f1923;
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .checkbox-list label:has(input:checked) { background: #0d4b3c; color: #00cc88; }
+    .checkbox-list input[type="checkbox"] { width: auto; accent-color: #00cc88; }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: #1a2a3a;
+      border-radius: 8px;
+      padding: 1.5rem;
+      width: 90%;
+      max-width: 400px;
+    }
+    .modal h3 { margin-bottom: 1rem; }
+    .modal .form-row { margin-bottom: 0.5rem; }
+
+    .season-status {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .season-status.active { background: #0d4b3c; color: #00cc88; }
+    .season-status.completed { background: #3a2a1a; color: #cc8800; }
+
+    .empty-state { text-align: center; color: #445566; padding: 2rem; }
+
+    @media (max-width: 600px) {
+      .container { padding: 1rem; }
+      .fixture-card { flex-direction: column; align-items: flex-start; }
+      th, td { padding: 0.35rem 0.25rem; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>FC26 League</h1>
+    <p>Track your FIFA league with the boys</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="players">Players</button>
+    <button class="tab" data-tab="seasons">Seasons</button>
+    <button class="tab" data-tab="fixtures">Fixtures</button>
+    <button class="tab" data-tab="table">Table</button>
+  </div>
+
+  <div class="container">
+    <!-- PLAYERS -->
+    <div class="panel active" id="players">
+      <div class="card">
+        <h3>Add Player</h3>
+        <div class="form-row">
+          <input type="text" id="newPlayerName" placeholder="Username" />
+          <button onclick="addPlayer()">Add</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Players</h3>
+        <div id="playerList" class="empty-state">No players yet</div>
+      </div>
+    </div>
+
+    <!-- SEASONS -->
+    <div class="panel" id="seasons">
+      <div class="card">
+        <h3>Create Season</h3>
+        <div class="form-row">
+          <input type="text" id="newSeasonName" placeholder="Season name" />
+        </div>
+        <p style="color:#8899aa; font-size:0.85rem; margin-bottom:0.5rem;">Select players:</p>
+        <div id="playerCheckboxes" class="checkbox-list"></div>
+        <div style="margin-top:0.75rem;">
+          <button onclick="createSeason()">Generate Fixtures</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Seasons</h3>
+        <div id="seasonList" class="empty-state">No seasons yet</div>
+      </div>
+    </div>
+
+    <!-- FIXTURES -->
+    <div class="panel" id="fixtures">
+      <div class="card">
+        <h3>Select Season</h3>
+        <select id="fixtureSeasonSelect" onchange="loadFixtures()">
+          <option value="">-- Pick a season --</option>
+        </select>
+      </div>
+      <div id="fixtureList"></div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="panel" id="table">
+      <div class="card">
+        <h3>Select Season</h3>
+        <div class="form-row">
+          <select id="tableSeasonSelect" onchange="loadTable()" style="flex:1;">
+            <option value="">-- Pick a season --</option>
+          </select>
+          <button class="danger" id="endSeasonBtn" onclick="endSeason()" style="display:none;">End Season</button>
+        </div>
+      </div>
+      <div class="card">
+        <div id="tableContent" class="empty-state">Select a season to view standings</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Score Modal -->
+  <div class="modal-overlay" id="scoreModal">
+    <div class="modal">
+      <h3>Submit Score</h3>
+      <input type="hidden" id="modalFixtureId" />
+      <div id="modalMatchLabel" style="margin-bottom:1rem; color:#8899aa;"></div>
+      <div class="form-row">
+        <input type="text" id="modalHomeTeam" placeholder="Home team (optional)" />
+      </div>
+      <div class="form-row">
+        <input type="number" id="modalHomeScore" placeholder="Home score" min="0" />
+      </div>
+      <div class="form-row">
+        <input type="text" id="modalAwayTeam" placeholder="Away team (optional)" />
+      </div>
+      <div class="form-row">
+        <input type="number" id="modalAwayScore" placeholder="Away score" min="0" />
+      </div>
+      <div class="form-row" style="justify-content:flex-end; gap:0.5rem;">
+        <button style="background:#445566;" onclick="closeModal()">Cancel</button>
+        <button onclick="submitScore()">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = '';
+
+    // --- Tabs ---
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+
+        if (tab.dataset.tab === 'seasons') { loadPlayers(); loadSeasons(); }
+        if (tab.dataset.tab === 'fixtures') { populateSeasonDropdowns(); }
+        if (tab.dataset.tab === 'table') { populateSeasonDropdowns(); }
+      });
+    });
+
+    // --- Players ---
+    async function loadPlayers() {
+      const res = await fetch(`${API}/api/players`);
+      const players = await res.json();
+      const el = document.getElementById('playerList');
+      if (!players.length) { el.innerHTML = '<div class="empty-state">No players yet</div>'; return; }
+      el.innerHTML = players.map(p => `<span class="player-tag">${p.username}</span>`).join(' ');
+
+      // Update checkboxes on seasons tab
+      const cb = document.getElementById('playerCheckboxes');
+      cb.innerHTML = players.map(p =>
+        `<label><input type="checkbox" value="${p.id}" /> ${p.username}</label>`
+      ).join('');
+    }
+
+    async function addPlayer() {
+      const input = document.getElementById('newPlayerName');
+      const username = input.value.trim();
+      if (!username) return;
+      await fetch(`${API}/api/players`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      });
+      input.value = '';
+      loadPlayers();
+    }
+
+    document.getElementById('newPlayerName').addEventListener('keydown', e => {
+      if (e.key === 'Enter') addPlayer();
+    });
+
+    // --- Seasons ---
+    async function loadSeasons() {
+      const res = await fetch(`${API}/api/seasons`);
+      const seasons = await res.json();
+      const el = document.getElementById('seasonList');
+      if (!seasons.length) { el.innerHTML = '<div class="empty-state">No seasons yet</div>'; return; }
+      el.innerHTML = seasons.map(s =>
+        `<div class="fixture-card">
+          <div><strong>${s.name}</strong></div>
+          <span class="season-status ${s.status}">${s.status}</span>
+        </div>`
+      ).join('');
+    }
+
+    async function createSeason() {
+      const name = document.getElementById('newSeasonName').value.trim();
+      if (!name) return alert('Enter a season name');
+      const checked = [...document.querySelectorAll('#playerCheckboxes input:checked')];
+      const playerIds = checked.map(c => Number(c.value));
+      if (playerIds.length < 2) return alert('Select at least 2 players');
+
+      await fetch(`${API}/api/seasons`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, playerIds }),
+      });
+      document.getElementById('newSeasonName').value = '';
+      document.querySelectorAll('#playerCheckboxes input').forEach(c => c.checked = false);
+      loadSeasons();
+      populateSeasonDropdowns();
+    }
+
+    async function populateSeasonDropdowns() {
+      const res = await fetch(`${API}/api/seasons`);
+      const seasons = await res.json();
+      const opts = '<option value="">-- Pick a season --</option>' +
+        seasons.map(s => `<option value="${s.id}">${s.name} (${s.status})</option>`).join('');
+      document.getElementById('fixtureSeasonSelect').innerHTML = opts;
+      document.getElementById('tableSeasonSelect').innerHTML = opts;
+    }
+
+    // --- Fixtures ---
+    async function loadFixtures() {
+      const seasonId = document.getElementById('fixtureSeasonSelect').value;
+      const el = document.getElementById('fixtureList');
+      if (!seasonId) { el.innerHTML = ''; return; }
+
+      const res = await fetch(`${API}/api/seasons/${seasonId}`);
+      const season = await res.json();
+      const fixtures = season.fixtures.sort((a, b) => a.round - b.round || a.id - b.id);
+
+      let html = '';
+      let currentRound = 0;
+      for (const f of fixtures) {
+        if (f.round !== currentRound) {
+          currentRound = f.round;
+          html += `<div class="round-header">Round ${currentRound}</div>`;
+        }
+        const homeTeamStr = f.homeTeam ? `<div class="fixture-teams">${f.homeTeam}</div>` : '';
+        const awayTeamStr = f.awayTeam ? `<div class="fixture-teams">${f.awayTeam}</div>` : '';
+
+        if (f.played) {
+          html += `<div class="fixture-card played" style="cursor:pointer;" onclick="openScoreModal(${f.id}, '${f.homePlayer.username}', '${f.awayPlayer.username}', ${f.homeScore}, ${f.awayScore}, '${f.homeTeam || ''}', '${f.awayTeam || ''}', ${season.status === 'completed'})">
+            <div class="fixture-players">
+              <div><strong>${f.homePlayer.username}</strong>${homeTeamStr}</div>
+              <span class="fixture-score">${f.homeScore} - ${f.awayScore}</span>
+              <div><strong>${f.awayPlayer.username}</strong>${awayTeamStr}</div>
+            </div>
+          </div>`;
+        } else {
+          const clickable = season.status === 'active'
+            ? `style="cursor:pointer;" onclick="openScoreModal(${f.id}, '${f.homePlayer.username}', '${f.awayPlayer.username}')"`
+            : '';
+          html += `<div class="fixture-card unplayed" ${clickable}>
+            <div class="fixture-players">
+              <strong>${f.homePlayer.username}</strong>
+              <span class="vs">vs</span>
+              <strong>${f.awayPlayer.username}</strong>
+            </div>
+          </div>`;
+        }
+      }
+      el.innerHTML = html;
+    }
+
+    // --- Score Modal ---
+    function openScoreModal(fixtureId, home, away, homeScore, awayScore, homeTeam, awayTeam, locked) {
+      if (locked) return;
+      document.getElementById('modalFixtureId').value = fixtureId;
+      document.getElementById('modalMatchLabel').textContent = `${home} vs ${away}`;
+      document.getElementById('modalHomeScore').value = homeScore ?? '';
+      document.getElementById('modalAwayScore').value = awayScore ?? '';
+      document.getElementById('modalHomeTeam').value = homeTeam || '';
+      document.getElementById('modalAwayTeam').value = awayTeam || '';
+      document.getElementById('modalHomeTeam').placeholder = `${home}'s team (optional)`;
+      document.getElementById('modalAwayTeam').placeholder = `${away}'s team (optional)`;
+      document.getElementById('scoreModal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('scoreModal').classList.remove('show');
+    }
+
+    async function submitScore() {
+      const fixtureId = document.getElementById('modalFixtureId').value;
+      const homeScore = parseInt(document.getElementById('modalHomeScore').value);
+      const awayScore = parseInt(document.getElementById('modalAwayScore').value);
+      const homeTeam = document.getElementById('modalHomeTeam').value.trim() || undefined;
+      const awayTeam = document.getElementById('modalAwayTeam').value.trim() || undefined;
+
+      if (isNaN(homeScore) || isNaN(awayScore)) return alert('Enter both scores');
+
+      await fetch(`${API}/api/fixtures/${fixtureId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ homeScore, awayScore, homeTeam, awayTeam }),
+      });
+      closeModal();
+      loadFixtures();
+    }
+
+    // --- Table ---
+    async function loadTable() {
+      const seasonId = document.getElementById('tableSeasonSelect').value;
+      const el = document.getElementById('tableContent');
+      const btn = document.getElementById('endSeasonBtn');
+
+      if (!seasonId) {
+        el.innerHTML = '<div class="empty-state">Select a season to view standings</div>';
+        btn.style.display = 'none';
+        return;
+      }
+
+      const res = await fetch(`${API}/api/seasons/${seasonId}/table`);
+      const data = await res.json();
+
+      if (data.season.status === 'active') {
+        btn.style.display = 'inline-block';
+        btn.dataset.seasonId = seasonId;
+      } else {
+        btn.style.display = 'none';
+      }
+
+      if (!data.standings.length) {
+        el.innerHTML = '<div class="empty-state">No matches played yet</div>';
+        return;
+      }
+
+      el.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Player</th><th>P</th><th>W</th><th>D</th><th>L</th>
+              <th>GF</th><th>GA</th><th>GD</th><th>Pts</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.standings.map((s, i) => `
+              <tr class="${i === 0 ? 'pos-1' : ''}">
+                <td>${i + 1}</td><td>${s.username}</td>
+                <td>${s.p}</td><td>${s.w}</td><td>${s.d}</td><td>${s.l}</td>
+                <td>${s.gf}</td><td>${s.ga}</td>
+                <td>${s.gd >= 0 ? '+' : ''}${s.gd}</td><td><strong>${s.pts}</strong></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    async function endSeason() {
+      const seasonId = document.getElementById('endSeasonBtn').dataset.seasonId;
+      if (!confirm('Are you sure you want to end this season? This cannot be undone.')) return;
+      await fetch(`${API}/api/seasons/${seasonId}/end`, { method: 'PATCH' });
+      loadTable();
+      populateSeasonDropdowns();
+    }
+
+    // --- Init ---
+    loadPlayers();
+  </script>
+</body>
+</html>
