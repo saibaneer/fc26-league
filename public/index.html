@@ -208,6 +208,11 @@
   <header>
     <h1>FC26 League</h1>
     <p>Track your FIFA league with the boys</p>
+    <div style="margin-top:0.75rem; display:flex; align-items:center; justify-content:center; gap:0.5rem;">
+      <input type="password" id="adminPinInput" placeholder="Admin PIN" style="width:140px; text-align:center;" />
+      <button onclick="savePin()" id="pinBtn">Login</button>
+    </div>
+    <div id="pinStatus" style="margin-top:0.35rem; font-size:0.8rem; color:#8899aa;"></div>
   </header>
 
   <div class="tabs">
@@ -308,6 +313,37 @@
   <script>
     const API = '';
 
+    // --- Admin PIN ---
+    let adminPin = localStorage.getItem('fc26_admin_pin') || '';
+
+    function getAdminHeaders() {
+      const headers = { 'Content-Type': 'application/json' };
+      if (adminPin) headers['x-admin-pin'] = adminPin;
+      return headers;
+    }
+
+    function savePin() {
+      const input = document.getElementById('adminPinInput');
+      adminPin = input.value.trim();
+      if (adminPin) {
+        localStorage.setItem('fc26_admin_pin', adminPin);
+        document.getElementById('pinStatus').textContent = 'Logged in as admin';
+        document.getElementById('pinStatus').style.color = '#00cc88';
+        document.getElementById('pinBtn').textContent = 'Update';
+      } else {
+        localStorage.removeItem('fc26_admin_pin');
+        document.getElementById('pinStatus').textContent = '';
+      }
+      input.value = '';
+    }
+
+    // Restore PIN on load
+    if (adminPin) {
+      document.getElementById('pinStatus').textContent = 'Logged in as admin';
+      document.getElementById('pinStatus').style.color = '#00cc88';
+      document.getElementById('pinBtn').textContent = 'Update';
+    }
+
     // --- Tabs ---
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -341,11 +377,12 @@
       const input = document.getElementById('newPlayerName');
       const username = input.value.trim();
       if (!username) return;
-      await fetch(`${API}/api/players`, {
+      const res = await fetch(`${API}/api/players`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminHeaders(),
         body: JSON.stringify({ username }),
       });
+      if (res.status === 401) return alert('Invalid admin PIN');
       input.value = '';
       loadPlayers();
     }
@@ -375,11 +412,12 @@
       const playerIds = checked.map(c => Number(c.value));
       if (playerIds.length < 2) return alert('Select at least 2 players');
 
-      await fetch(`${API}/api/seasons`, {
+      const res = await fetch(`${API}/api/seasons`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminHeaders(),
         body: JSON.stringify({ name, playerIds }),
       });
+      if (res.status === 401) return alert('Invalid admin PIN');
       document.getElementById('newSeasonName').value = '';
       document.querySelectorAll('#playerCheckboxes input').forEach(c => c.checked = false);
       loadSeasons();
@@ -466,11 +504,12 @@
 
       if (isNaN(homeScore) || isNaN(awayScore)) return alert('Enter both scores');
 
-      await fetch(`${API}/api/fixtures/${fixtureId}`, {
+      const res = await fetch(`${API}/api/fixtures/${fixtureId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminHeaders(),
         body: JSON.stringify({ homeScore, awayScore, homeTeam, awayTeam }),
       });
+      if (res.status === 401) return alert('Invalid admin PIN');
       closeModal();
       loadFixtures();
     }
@@ -527,7 +566,11 @@
     async function endSeason() {
       const seasonId = document.getElementById('endSeasonBtn').dataset.seasonId;
       if (!confirm('Are you sure you want to end this season? This cannot be undone.')) return;
-      await fetch(`${API}/api/seasons/${seasonId}/end`, { method: 'PATCH' });
+      const res = await fetch(`${API}/api/seasons/${seasonId}/end`, {
+        method: 'PATCH',
+        headers: getAdminHeaders(),
+      });
+      if (res.status === 401) return alert('Invalid admin PIN');
       loadTable();
       populateSeasonDropdowns();
     }

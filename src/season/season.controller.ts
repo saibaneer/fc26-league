@@ -1,11 +1,13 @@
-import { Controller, Post, Get, Patch, Param, Body } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Param, Body, UseGuards } from '@nestjs/common';
 import { SeasonService } from './season.service';
+import { AdminGuard } from '../auth/admin.guard';
 
 @Controller('api/seasons')
 export class SeasonController {
   constructor(private readonly seasonService: SeasonService) {}
 
   @Post()
+  @UseGuards(AdminGuard)
   create(@Body() body: { name: string; playerIds: number[] }) {
     return this.seasonService.create(body.name, body.playerIds);
   }
@@ -26,6 +28,7 @@ export class SeasonController {
   }
 
   @Patch(':id/end')
+  @UseGuards(AdminGuard)
   endSeason(@Param('id') id: string) {
     return this.seasonService.endSeason(+id);
   }

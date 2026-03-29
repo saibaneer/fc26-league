@@ -1,11 +1,13 @@
-import { Controller, Patch, Param, Body } from '@nestjs/common';
+import { Controller, Patch, Param, Body, UseGuards } from '@nestjs/common';
 import { FixtureService } from './fixture.service';
+import { AdminGuard } from '../auth/admin.guard';
 
 @Controller('api/fixtures')
 export class FixtureController {
   constructor(private readonly fixtureService: FixtureService) {}
 
   @Patch(':id')
+  @UseGuards(AdminGuard)
   submitScore(
     @Param('id') id: string,
     @Body()
